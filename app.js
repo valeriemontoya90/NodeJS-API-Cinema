@@ -98,6 +98,7 @@ app.get('/users/:id', function(req, res) {
         });
 });
 
+
 /*** DANS LES 4 SESSIONS SUIVANTES, POUR TOUS LES RETOURS ON AFFICHE LES FILMS ***/
 /****** UTILISATEUR et ses LIKES ***/
 
@@ -109,23 +110,33 @@ app.get('/users/:id/likes', function(req, res) {
     var idsMovie = [];
     var nbMovieLikes;
     var idUser = req.params.id;
-    connection.query("SELECT COUNT(`idMovie`) AS idMovie FROM `movie-liked` WHERE idUser = '"+idUser+"'")
-        .on('result', function(rows2){
-        })
     connection.query("SELECT `idMovie` FROM `movie-liked` WHERE idUser = '"+idUser+"'")
         .on('result', function(rows2){
             idsMovie.push(rows2["idMovie"]);
             console.log(idsMovie);
         })
         .on('end', function(){
-            connection.query("SELECT * FROM `movie` WHERE id = '"+idsMovie[2]+"'")
-                .on('result', function(rows){
-                    data.push(rows);
-                })
-                .on('end', function(){
-                    res.json({ data: data })
-                });
+            console.log("avant for",idsMovie)
+            for(var i=0; i<idsMovie.length; i++){
+            console.log("pendant for")
+                console.log("idsMovie[i]",idsMovie[i])
+                connection.query("SELECT * FROM `movie` WHERE id = '"+idsMovie[i]+"'")
+                    .on('result', function(rows){
+                        data.push(rows);
+                        console.log("rows: %o",rows);
+                        console.log("data: %o",data);
+                    })
+                    .on('end', function(){
+                        console.log(data.length)
+                        if(data.length==idsMovie.length){
+                            res.json({ data: data })
+                        }
+                    });
+            }
+            
         });
+        console.log("AAAAAAAAAA")
+});
         /*
         .on('end', function(){
             connection.query("SELECT COUNT(`idMovie`) AS idMovie FROM `movie-liked` WHERE idUser = '"+idUser+"'")
@@ -147,7 +158,6 @@ app.get('/users/:id/likes', function(req, res) {
                 });
         });
         */
-});
 
 // Quand un utilisateur aime un film
 app.post('/users/:id/likes/:idmovie', function(req, res) {
@@ -211,7 +221,7 @@ app.delete('/users/:id/likes/:idmovie', function(req, res) {
 // On récupère tous les films détestés par un utilisateur
 app.get('/users/:id/dislikes', function(req, res) {
     console.log("GET: ");
-    console.log(req);
+    //console.log(req);
     var data = [];
     var idUser = req.params.id;
     connection.query("SELECT * FROM `movie-disliked` WHERE idUser = '"+idUser+"'")
