@@ -6,9 +6,9 @@ var express = require('express'),
 var qs = require("querystring");
 var bodyParser = require('body-parser');
 
-//  MYSQL tentative de connexion
-app.use( bodyParser.json() );       // to support JSON-encoded bodies
-app.use( bodyParser.urlencoded() ); // to support URL-encoded bodies
+app.use( bodyParser.json() );
+app.use( bodyParser.urlencoded() );
+
 var connection = mysql.createConnection({
   host     : 'localhost',
   user     : 'root',
@@ -18,35 +18,15 @@ var connection = mysql.createConnection({
 
 connection.connect(function(err) {
     if (err) {
-        console.error('error connecting: ' + err.stack);
+        console.error('Error de connection: ' + err.stack);
         return;
     }
     console.log('connected as id ' + connection.threadId);
 });
- 
-// Quand on est connecté à io
-io.sockets.on('connection', function(socket) {
 
-});
+/****** TOUS LES UTILISATEURS ***/
 
-// route des fichier statics (js, css, etc.)
-app.use(express.static(__dirname+'/public'));
-
-
-/***********ROUTES************/
-
-app.get('/', function(req, res) {
-      res.render('index.ejs');
-});
-/*
-app.get('/ajouterUser', function(req, res) {
-      res.render('ajouterUser.ejs');
-});
-*/
-
-//User
-
-// On crée un user
+// On crée un utilisateur
 app.post('/users', function(req, res){
     console.log("POST: ");
     var user = req.param("username");
@@ -59,13 +39,35 @@ app.post('/users', function(req, res){
     });
 });
 
-// On récupère tous les users
+// On récupère tous les utilisateurs
 app.get('/users', function(req, res) {
     console.log("GET: ");
     var data = [];
-    connection.query("SELECT * FROM `user`")
+    connection.query("SELECT `id`, `username` FROM `user`")
         .on('result', function(rows){
-        data.push(rows);
+            data.push(rows);
+        })
+        .on('end', function(){
+            res.json({ data: data })
+        });
+});
+
+/****** UN UTILISATEUR ***/
+
+// On modifie le username d'un utilisateur donnée
+app.put('/users/:id', function(req, res) {
+    console.log("PUT: ");
+    var user =  req.param("username");
+    var data = [];
+    if(!user){
+        user = "valerie";
+    }
+    connection.query("UPDATE user set username = '"+user+"' WHERE `id` = '"+req.params.id+"'", function (err, result) {
+        if (err) throw err;
+    })
+    connection.query("SELECT * FROM `user` WHERE `id` = '"+req.params.id+"'")
+        .on('result', function(rows){
+            data.push(rows);
 
         })
         .on('end', function(){
@@ -73,118 +75,146 @@ app.get('/users', function(req, res) {
         });
 });
 
-// On récupère toutes les infos concernant un user donnée
+// On supprime un utilisateur
+app.delete('/users/:id', function(req, res) {
+    console.log("DELETE: ");
+    var idUser = req.params.id;
+    connection.query("DELETE FROM user WHERE  `id` = '"+idUser+"'", function (err, result) {
+        if (err) throw err;
+    })
+});
+
+// On récupère toutes les infos concernant un utilisateur
 app.get('/users/:id', function(req, res) {
     console.log("GET: ");
     var data = [];
-    var likes_count =[];
-    var watched_count =[];
-
-    connection.query("SELECT SUM( `id` ) AS likes_count FROM  `movie-liked` WHERE idUser = '"+req.params.id+"'")
+    var idUser = req.params.id;
+    connection.query("SELECT * FROM `user` WHERE id = '"+idUser+"'")
         .on('result', function(rows){
-            likes_count.push(rows);
-            watched_count.push(rows.watched_count);
+            data.push(rows);
         })
         .on('end', function(){
-            connection.query("SELECT SUM( `id` ) AS watched_count FROM  `movie-watched` WHERE idUser = '"+req.params.id+"'")
-            .on('result', function(rows){
-                likes_count.push(rows);
-            })
-            .on('end', function(){
-                connection.query("SELECT * FROM  `user` WHERE  `id` = '"+req.params.id+"'")
-                    .on('result', function(rows){
-                        data.push(rows);
-                    })
-            
-                .on('end', function(){
-                    data[0].counts = likes_count;
-                    res.json({ data: data })
-                })
-            }); 
+            res.json({ data: data })
         });
 });
 
-// On modifie le username d'un user donnée
-app.put('/users/:id', function(req, res) {
-    console.log("PUT: ");
-    var user =  req.param("username")
-    if(!user){ 
-        user = 'val';
-    }
-    connection.query("UPDATE user set username = '"+user+"' WHERE  `id` = '"+req.params.id+"'", function (err, result) {
-        if (err) throw err;
-        console.log('deleted ' + result.affectedRows + 'rows');
-    })
-});
+/*** DANS LES 4 SESSIONS SUIVANTES, POUR TOUS LES RETOURS ON AFFICHE LES FILMS ***/
+/****** UTILISATEUR et ses LIKES ***/
 
-// On supprime un user donnée
-app.delete('/users/:id', function(req, res) {
-    console.log("DELETE: ");
-    var userid = req.params.id;
-    connection.query("DELETE FROM user WHERE  `id` = '"+userid+"'", function (err, result) {
-        if (err) throw err;
-        console.log('deleted ' + result.affectedRows + ' rows');
-    })
-    
-});
 
-// On récupère tous les films aimés par un user donnée
+// On récupère tous les films aimés d'un utilisateur
 app.get('/users/:id/likes', function(req, res) {
     console.log("GET: ");
-    console.log(req);
     var data = [];
-    var userId = req.params.id;
-    connection.query("SELECT * FROM `movie-liked` WHERE idUser = '"+userId+"'")
-        .on('result', function(rows){
-            data.push(rows);
+    var idsMovie = [];
+    var nbMovieLikes;
+    var idUser = req.params.id;
+    connection.query("SELECT COUNT(`idMovie`) AS idMovie FROM `movie-liked` WHERE idUser = '"+idUser+"'")
+        .on('result', function(rows2){
+        })
+    connection.query("SELECT `idMovie` FROM `movie-liked` WHERE idUser = '"+idUser+"'")
+        .on('result', function(rows2){
+            idsMovie.push(rows2["idMovie"]);
+            console.log(idsMovie);
         })
         .on('end', function(){
-            res.json({ data: data })
+            connection.query("SELECT * FROM `movie` WHERE id = '"+idsMovie[2]+"'")
+                .on('result', function(rows){
+                    data.push(rows);
+                })
+                .on('end', function(){
+                    res.json({ data: data })
+                });
         });
-});
-
-// On fait aimé un film à un user donné
-app.post('/users/:id/likes/:idmovie', function(req, res) {
-    console.log("POST: ");
-    console.log(req);
-    var userId = req.param("id");
-    var movieId = req.param("idmovie");
-    console.log("userId "+userId);
-    console.log("movieId "+movieId);
-    connection.query('INSERT INTO `movie-liked` SET ?', { idUser : userId, idMovie : movieId }, function(err, result) {
-        if (err) throw err;
-        });
-});
-
-// On fait aimé un film à un user donné
-app.delete('/users/:id/likes/:idmovie', function(req, res) {
-    console.log("DELETE: ");
-    console.log(req);
-    var data = [];
-    var userId = req.param("id");
-    var movieId = req.param("idmovie");
-    console.log("userId "+userId);
-    console.log("movieId "+movieId);
-    connection.query("DELETE FROM `movie-liked` WHERE `idUser` = '"+userId+"' AND `idMovie` = '"+movieId+"'", function(err, result) {
-        if (err) throw err;
-        })
         /*
-        .on('result', function(rows){
-            data.push(rows);
-        })
         .on('end', function(){
-            res.json({ data: data })
+            connection.query("SELECT COUNT(`idMovie`) AS idMovie FROM `movie-liked` WHERE idUser = '"+idUser+"'")
+                .on('result', function(rows2){
+                    var test = rows2["idMovie"];
+                    console.log(rows2["idMovie"]);
+                    for (var i=0; i<rows2["idMovie"]; i++) {
+                        connection.query("SELECT * FROM `movie` WHERE id = '"+idsMovie[1]+"'")
+                            .on('result', function(rows){
+                                data.push(rows);
+                            })
+                            .on('end', function(){
+                                res.json({ data: data })
+                            });
+                    }
+                })
+                .on('end', function(){
+                    res.json({ data: data })
+                });
         });
         */
 });
 
-// On récupère tous les films aimés par un user donnée
+// Quand un utilisateur aime un film
+app.post('/users/:id/likes/:idmovie', function(req, res) {
+    console.log("POST: ");
+    console.log(req);
+    var data = [];
+    var idUser = req.param("id");
+    var idMovie = req.param("idmovie");
+    var nblikes;
+    console.log("idUser "+idUser);
+    console.log("idMovie "+idMovie);
+    // On ajoute le film
+    connection.query('INSERT INTO `movie-liked` SET ?', { idUser : idUser, idMovie : idMovie }, function (err, result) {
+        if (err) throw err;
+    });
+    // Et on incrémente le nombre de likes
+    connection.query("SELECT `numberLikes` FROM `user` WHERE id = '"+idUser+"'")
+        .on('result', function(rows1){
+            console.log(rows1["numberLikes"]);
+            nblikes = rows1["numberLikes"];
+            nblikes = nblikes + 1;
+        })
+        .on('end', function(){
+            connection.query("UPDATE `user` SET `numberLikes` = "+nblikes+" WHERE id = '"+idUser+"'", function (err, result) {
+                if (err) throw err;
+            })
+        });
+});
+
+// Quand un utilisateur n'aime plus un film
+app.delete('/users/:id/likes/:idmovie', function(req, res) {
+    console.log("DELETE: ");
+    console.log(req);
+    var data = [];
+    var idUser = req.param("id");
+    var idMovie = req.param("idmovie");
+    console.log("idUser "+idUser);
+    console.log("idMovie "+idMovie);
+    // On supprime le film
+    connection.query("DELETE FROM `movie-liked` WHERE `idUser` = '"+idUser+"' AND `idMovie` = '"+idMovie+"'", function(err, result) {
+        if (err) throw err;
+        })
+    // Et on décrémente le nombre de likes
+    connection.query("SELECT `numberLikes` FROM `user` WHERE id = '"+idUser+"'")
+        .on('result', function(rows1){
+            console.log(rows1["numberLikes"]);
+            nblikes = rows1["numberLikes"];
+            nblikes = nblikes - 1;
+        })
+        .on('end', function(){
+            connection.query("UPDATE `user` SET `numberLikes` = "+nblikes+" WHERE id = '"+idUser+"'"), function (err, result) {
+                if (err) throw err;
+            }
+        });
+});
+
+
+/****** UTILISATEUR et ses DISLIKES ***/
+
+
+// On récupère tous les films détestés par un utilisateur
 app.get('/users/:id/dislikes', function(req, res) {
     console.log("GET: ");
     console.log(req);
     var data = [];
-    var userId = req.params.id;
-    connection.query("SELECT * FROM `movie-disliked` WHERE idUser = '"+userId+"'")
+    var idUser = req.params.id;
+    connection.query("SELECT * FROM `movie-disliked` WHERE idUser = '"+idUser+"'")
         .on('result', function(rows){
             data.push(rows);
         })
@@ -193,38 +223,69 @@ app.get('/users/:id/dislikes', function(req, res) {
         });
 });
 
-// On ajoute tous les films aimés par un user donnée
+// On signale un film non aimé par un utilisateur
 app.post('/users/:id/dislikes/:idmovie', function(req, res) {
     console.log("POST: ");
     console.log(req);
     var data = [];
-    var userId = req.param("id");
-    var movieId = req.param("idmovie");
-    console.log("userId "+userId);
-    console.log("movieId "+movieId);
-    connection.query('INSERT INTO `movie-disliked` SET ?', { idUser : userId, idMovie : movieId }, function(err, result) {
+    var idUser = req.param("id");
+    var idMovie = req.param("idmovie");
+    console.log("idUser "+idUser);
+    console.log("idMovie "+idMovie);
+    // On ajoute le film
+    connection.query('INSERT INTO `movie-disliked` SET ?', { idUser : idUser, idMovie : idMovie }, function(err, result) {
         if (err) throw err;
+        });
+    // Et on incrémente le nombre de likes
+    connection.query("SELECT `numberDislikes` FROM `user` WHERE id = '"+idUser+"'")
+        .on('result', function(rows1){
+            console.log(rows1["numberDislikes"]);
+            nbdislikes = rows1["numberDislikes"];
+            nbdislikes = nbdislikes + 1;
+        })
+        .on('end', function(){
+            connection.query("UPDATE `user` SET `numberDislikes` = "+nbdislikes+" WHERE id = '"+idUser+"'", function (err, result) {
+                if (err) throw err;
+            })
         });
 });
 
-// On supprime un film aimé par un user donnée
+// On supprime un film non aimé par un user donnée
 app.delete('/users/:id/dislikes/:idmovie', function(req, res) {
     console.log("POST: ");
     console.log(req);
     var data = [];
-    var userId = req.param("id");
-    var movieId = req.param("idmovie");
-    console.log("userId "+userId);
-    console.log("movieId "+movieId);
-    connection.query("DELETE FROM `movie-disliked` WHERE `idUser` = '"+userId+"' AND `idMovie` = '"+movieId+"'", function(err, result) {
+    var idUser = req.param("id");
+    var idMovie = req.param("idmovie");
+    console.log("idUser "+idUser);
+    console.log("idMovie "+idMovie);
+    // On supprime le film dans la table movie-disliked
+    connection.query("DELETE FROM `movie-disliked` WHERE `idUser` = '"+idUser+"' AND `idMovie` = '"+idMovie+"'", function(err, result) {
         if (err) throw err;
         })
+    // Et on décrémente le nombre de likes dans la table user
+    connection.query("SELECT `numberDislikes` FROM `user` WHERE id = '"+idUser+"'")
+        .on('result', function(rows1){
+            console.log(rows1["numberDislikes"]);
+            nbdislikes = rows1["numberDislikes"];
+            nbdislikes = nbdislikes - 1;
+        })
+        .on('end', function(){
+            connection.query("UPDATE `user` SET `numberDislikes` = "+nbdislikes+" WHERE id = '"+idUser+"'", function (err, result) {
+                if (err) throw err;
+            })
+        });
 });
 
+
+/****** L'UTILISATEUR et ses WATCHED ***/
+
+
+// On récupère tous les films vus par un user donnée
 app.get('/users/:id/watched', function(req, res) {
     var data = [];
-    var userId = req.params.id;
-    connection.query("SELECT * FROM `movie-watched` WHERE `idUser` = '"+userId+"'")
+    var idUser = req.params.id;
+    connection.query("SELECT * FROM `movie-watched` WHERE `idUser` = '"+idUser+"'")
         .on('result', function(rows){
             data.push(rows);
         })
@@ -233,34 +294,66 @@ app.get('/users/:id/watched', function(req, res) {
         });
 });
 
-app.post('/users/:id/watched', function(req, res) {
+// On ajoute un film vu par un user donnée
+app.post('/users/:id/watched/:idmovie', function(req, res) {
     console.log("POST: ");
     console.log(req);
     var data = [];
-    var userId = req.params.id;
-    var movieId = req.param("idmovie");
-    console.log("userId "+userId);
-    console.log("movieId "+movieId);
-    connection.query('INSERT INTO `movie-watched` SET ?', { idUser : userId, idMovie : movieId }, function(err, result) {
+    var nbwatched;
+    var idUser = req.param("id");
+    var idMovie = req.param("idmovie");
+    console.log("idUser "+idUser);
+    console.log("idMovie "+idMovie);
+    // On ajoute le film dans la table movie-watched
+    connection.query('INSERT INTO `movie-watched` SET ?', { idUser : idUser, idMovie : idMovie }, function(err, result) {
         if (err) throw err;
+        });
+    // Et on incrémente le nombre de watched dans la table user
+    connection.query("SELECT `numberWatched` FROM `user` WHERE id = '"+idUser+"'")
+        .on('result', function(rows1){
+            console.log(rows1["numberWatched"]);
+            nbwatched = rows1["numberWatched"];
+            nbwatched = nbwatched + 1;
+        })
+        .on('end', function(){
+            connection.query("UPDATE `user` SET `numberWatched` = "+nbwatched+" WHERE id = '"+idUser+"'", function (err, result) {
+                if (err) throw err;
+            })
         });
 });
 
+// On supprime un film vu par un user donnée
 app.delete('/users/:id/watched/:idmovie', function(req, res) {
     console.log("DELETE: ");
     console.log(req);
     var data = [];
-    var userId = req.param("id");
-    var movieId = req.param("idmovie");
-    console.log("userId "+userId);
-    console.log("movieId "+movieId);
-    connection.query("DELETE FROM `movie-watched` WHERE `idUser` = '"+userId+"' AND `idMovie` = '"+movieId+"'", function(err, result) {
+    var idUser = req.param("id");
+    var idMovie = req.param("idmovie");
+    console.log("idUser "+idUser);
+    console.log("idMovie "+idMovie);
+    // On supprime le film dans la table movie-watched
+    connection.query("DELETE FROM `movie-watched` WHERE `idUser` = '"+idUser+"' AND `idMovie` = '"+idMovie+"'", function(err, result) {
         if (err) throw err;
         })
+    // Et on décrémente le nombre de watched dans la table user
+    connection.query("SELECT `numberWatched` FROM `movie-watched` WHERE id = '"+idUser+"'")
+        .on('result', function(rows1){
+            console.log(rows1["numberWatched"]);
+            nbwatched = rows1["numberWatched"];
+            nbwatched = nbwatched - 1;
+        })
+        .on('end', function(){
+            connection.query("UPDATE `user` SET `numberWatched` = "+nbwatched+" WHERE id = '"+idUser+"'", function (err, result) {
+                if (err) throw err;
+            })
+        });
 });
 
-//Movies
 
+/****** LES FILMS ***/
+
+
+// On affiche tous les films
 app.get('/movies', function(req, res) {
     var data = [];
     connection.query("SELECT * FROM  `movie`")
@@ -272,7 +365,7 @@ app.get('/movies', function(req, res) {
         });
 });
 
-// On crée un movie
+// On crée un film
 app.post('/movies', function(req, res){
     console.log("POST: ");
     var movie = req.param("title");
@@ -282,17 +375,17 @@ app.post('/movies', function(req, res){
         movie = 'movie par defaut';
     }
     connection.query('INSERT INTO movie SET ?', { "title" : movie, "genre" : genre}, function(err, result) {
-    if (err) throw err;
+        if (err) throw err;
     });
 });
 
-// On récupère tous les films aimés par un user donnée
+// On récupère tous les films aimés par un utilisateur
 app.get('/movies/:id', function(req, res) {
     console.log("GET: ");
     console.log(req);
     var data = [];
-    var movieId = req.params.id;
-    connection.query("SELECT * FROM `movie` WHERE id = '"+movieId+"'")
+    var idMovie = req.params.id;
+    connection.query("SELECT * FROM `movie` WHERE id = '"+idMovie+"'")
         .on('result', function(rows){
             data.push(rows);
         })
@@ -301,23 +394,20 @@ app.get('/movies/:id', function(req, res) {
         });
 });
 
-// On récupère tous les films aimés par un user donnée
+// On récupère tous les films aimés par un utilisateur
 app.delete('/movies/:id', function(req, res) {
     console.log("GET: ");
     console.log(req);
     var data = [];
-    var movieId = req.params.id;
-    connection.query("DELETE FROM `movie` WHERE `id` = '"+movieId+"'", function(err, result) {
+    var idMovie = req.params.id;
+    connection.query("DELETE FROM `movie` WHERE `id` = '"+idMovie+"'", function(err, result) {
         if (err) throw err;
         })
 });
 
-// En cas de 404
 app.use(function(req, res, next){
     res.setHeader('Content-Type', 'text/plain');
-    res.send(404, 'Page introuvable !');
+    res.send(404, "Cette page n'existe pas !");
 });
 
-
-//FIN de la liste des ROUTES
 server.listen(8080);
