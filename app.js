@@ -285,9 +285,35 @@ app.delete('/users/:id/dislikes/:idmovie', function(req, res) {
 
 
 /****** L'UTILISATEUR et ses WATCHED ***/
-
+// On ajoute un film vu par un utilisateur
+app.post('/users/:id/watched/:idmovie', function(req, res) {
+    console.log("POST: ");
+    console.log(req);
+    var data = [];
+    var nbwatched;
+    var idUser = req.param("id");
+    var idMovie = req.param("idmovie");
+    console.log("idUser "+idUser);
+    console.log("idMovie "+idMovie);
+    // On ajoute le film dans la table movie-watched
+    connection.query('INSERT INTO `movie-watched` SET ?', { idUser : idUser, idMovie : idMovie }, function(err, result) {
+        if (err) throw err;
+        });
+    // Et on incrémente le nombre de watched dans la table user
+    connection.query("SELECT `numberWatched` FROM `user` WHERE id = '"+idUser+"'")
+        .on('result', function(rows1){
+            console.log(rows1["numberWatched"]);
+            nbwatched = rows1["numberWatched"];
+            nbwatched = nbwatched + 1;
+        })
+        .on('end', function(){
+            connection.query("UPDATE `user` SET `numberWatched` = "+nbwatched+" WHERE id = '"+idUser+"'", function (err, result) {
+                if (err) throw err;
+            })
+        });
+});
 /*
-// On récupère tous les films vus par un user donnée
+// On récupère tous les films vus par un utilisateur
 app.get('/users/:id/watched', function(req, res) {
     var data = [];
     var idUser = req.params.id;
@@ -300,7 +326,6 @@ app.get('/users/:id/watched', function(req, res) {
         });
 });
 */
-
 // On récupère tous les films vus par un utilisateur
 app.get('/users/:id/watched', function(req, res) {
     console.log("GET: ");
@@ -340,33 +365,6 @@ app.get('/users/:id/watched', function(req, res) {
         console.log("AAAAAAAAAA")
 });
 
-// On ajoute un film vu par un utilisateur
-app.post('/users/:id/watched/:idmovie', function(req, res) {
-    console.log("POST: ");
-    console.log(req);
-    var data = [];
-    var nbwatched;
-    var idUser = req.param("id");
-    var idMovie = req.param("idmovie");
-    console.log("idUser "+idUser);
-    console.log("idMovie "+idMovie);
-    // On ajoute le film dans la table movie-watched
-    connection.query('INSERT INTO `movie-watched` SET ?', { idUser : idUser, idMovie : idMovie }, function(err, result) {
-        if (err) throw err;
-        });
-    // Et on incrémente le nombre de watched dans la table user
-    connection.query("SELECT `numberWatched` FROM `user` WHERE id = '"+idUser+"'")
-        .on('result', function(rows1){
-            console.log(rows1["numberWatched"]);
-            nbwatched = rows1["numberWatched"];
-            nbwatched = nbwatched + 1;
-        })
-        .on('end', function(){
-            connection.query("UPDATE `user` SET `numberWatched` = "+nbwatched+" WHERE id = '"+idUser+"'", function (err, result) {
-                if (err) throw err;
-            })
-        });
-});
 
 // On supprime un film vu par un user donnée
 app.delete('/users/:id/watched/:idmovie', function(req, res) {
