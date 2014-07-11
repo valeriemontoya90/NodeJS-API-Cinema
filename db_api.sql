@@ -3,7 +3,7 @@
 -- http://www.phpmyadmin.net
 --
 -- Client: localhost
--- Généré le : Jeu 10 Juillet 2014 à 17:24
+-- Généré le : Ven 11 Juillet 2014 à 10:41
 -- Version du serveur: 5.5.20
 -- Version de PHP: 5.3.10
 
@@ -60,7 +60,7 @@ CREATE TABLE IF NOT EXISTS `movie-disliked` (
   `idMovie` int(11) NOT NULL,
   `date` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=12 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=7 ;
 
 --
 -- Contenu de la table `movie-disliked`
@@ -163,7 +163,7 @@ CREATE TABLE IF NOT EXISTS `user` (
   `numberWatchList` int(11) NOT NULL,
   `date` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=43 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=47 ;
 
 --
 -- Contenu de la table `user`
@@ -182,9 +182,8 @@ INSERT INTO `user` (`id`, `username`, `numberLikes`, `numberDislikes`, `numberWa
 (11, 'Patrick', 0, 0, 0, 0, '0000-00-00 00:00:00'),
 (12, 'Man', 0, 0, 0, 0, '0000-00-00 00:00:00'),
 (39, 'Julie', 0, 0, 0, 0, '2014-07-10 08:12:22'),
-(40, 'Julie', 0, 0, 0, 0, '2014-07-10 08:14:22'),
-(41, 'Julie', 0, 0, 0, 0, '2014-07-10 08:22:53'),
-(42, 'Lucie', 0, 0, 0, 0, '2014-07-10 08:36:38');
+(42, 'Lucie', 0, 0, 0, 0, '2014-07-10 08:36:38'),
+(46, 'Kevin', 0, 0, 0, 0, '2014-07-11 05:59:19');
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
