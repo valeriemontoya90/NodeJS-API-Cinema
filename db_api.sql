@@ -3,7 +3,7 @@
 -- http://www.phpmyadmin.net
 --
 -- Client: localhost
--- Généré le : Ven 11 Juillet 2014 à 10:41
+-- Généré le : Ven 11 Juillet 2014 à 11:56
 -- Version du serveur: 5.5.20
 -- Version de PHP: 5.3.10
 
@@ -31,22 +31,24 @@ CREATE TABLE IF NOT EXISTS `movie` (
   `title` varchar(255) NOT NULL,
   `cover` varchar(255) NOT NULL,
   `genre` int(11) NOT NULL,
+  `date` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=12 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=17 ;
 
 --
 -- Contenu de la table `movie`
 --
 
-INSERT INTO `movie` (`id`, `title`, `cover`, `genre`) VALUES
-(1, '"Coldwater"', '', 0),
-(3, '"Palo Alto"', '', 0),
-(4, '"The Town"', '', 0),
-(5, '"Her"', '', 0),
-(6, '"Drive"', '', 0),
-(7, 'Perfect sens', '', 0),
-(8, 'Summerland', '', 0),
-(11, 'The One', '', 0);
+INSERT INTO `movie` (`id`, `title`, `cover`, `genre`, `date`) VALUES
+(1, '"Coldwater"', '', 0, '0000-00-00 00:00:00'),
+(3, '"Palo Alto"', '', 0, '0000-00-00 00:00:00'),
+(4, '"The Town"', '', 0, '0000-00-00 00:00:00'),
+(5, '"Her"', '', 0, '0000-00-00 00:00:00'),
+(6, '"Drive"', '', 0, '0000-00-00 00:00:00'),
+(7, 'Perfect sens', '', 0, '0000-00-00 00:00:00'),
+(8, 'Summerland', '', 0, '0000-00-00 00:00:00'),
+(11, 'The One', '', 0, '0000-00-00 00:00:00'),
+(13, 'Star Wars', '', 0, '0000-00-00 00:00:00');
 
 -- --------------------------------------------------------
 
@@ -60,7 +62,7 @@ CREATE TABLE IF NOT EXISTS `movie-disliked` (
   `idMovie` int(11) NOT NULL,
   `date` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=7 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=8 ;
 
 --
 -- Contenu de la table `movie-disliked`
@@ -70,8 +72,8 @@ INSERT INTO `movie-disliked` (`id`, `idUser`, `idMovie`, `date`) VALUES
 (2, 2, 8, '0000-00-00 00:00:00'),
 (3, 1, 4, '0000-00-00 00:00:00'),
 (4, 5, 8, '0000-00-00 00:00:00'),
-(5, 3, 2, '0000-00-00 00:00:00'),
-(6, 4, 8, '0000-00-00 00:00:00');
+(6, 4, 8, '0000-00-00 00:00:00'),
+(7, 2, 4, '2014-07-11 09:38:48');
 
 -- --------------------------------------------------------
 
@@ -129,24 +131,29 @@ CREATE TABLE IF NOT EXISTS `movie-watched` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `idUser` int(11) NOT NULL,
   `idMovie` int(11) NOT NULL,
+  `date` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=15 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=19 ;
 
 --
 -- Contenu de la table `movie-watched`
 --
 
-INSERT INTO `movie-watched` (`id`, `idUser`, `idMovie`) VALUES
-(3, 1, 2),
-(4, 1, 3),
-(7, 1, 0),
-(8, 1, 0),
-(9, 1, 5),
-(10, 1, 2),
-(11, 1, 2),
-(12, 1, 2),
-(13, 1, 1),
-(14, 1, 6);
+INSERT INTO `movie-watched` (`id`, `idUser`, `idMovie`, `date`) VALUES
+(3, 1, 2, '0000-00-00 00:00:00'),
+(4, 1, 3, '0000-00-00 00:00:00'),
+(7, 1, 0, '0000-00-00 00:00:00'),
+(8, 1, 0, '0000-00-00 00:00:00'),
+(9, 1, 5, '0000-00-00 00:00:00'),
+(10, 1, 2, '0000-00-00 00:00:00'),
+(11, 1, 2, '0000-00-00 00:00:00'),
+(12, 1, 2, '0000-00-00 00:00:00'),
+(13, 1, 1, '0000-00-00 00:00:00'),
+(14, 1, 6, '0000-00-00 00:00:00'),
+(15, 1, 5, '0000-00-00 00:00:00'),
+(16, 3, 3, '0000-00-00 00:00:00'),
+(17, 3, 3, '0000-00-00 00:00:00'),
+(18, 1, 1, '0000-00-00 00:00:00');
 
 -- --------------------------------------------------------
 
@@ -170,9 +177,9 @@ CREATE TABLE IF NOT EXISTS `user` (
 --
 
 INSERT INTO `user` (`id`, `username`, `numberLikes`, `numberDislikes`, `numberWatched`, `numberWatchList`, `date`) VALUES
-(1, 'Valérie', 5, 0, 1, 0, '2014-07-10 14:06:35'),
+(1, 'Valérie', 5, 0, 3, 0, '2014-07-11 09:21:15'),
 (2, 'Benjamin', 0, 0, 0, 0, '0000-00-00 00:00:00'),
-(3, 'Vincentt', 0, 0, 0, 0, '2014-07-10 12:31:36'),
+(3, 'Vincentt', 0, -1, 2, 0, '2014-07-11 09:41:20'),
 (5, 'Billy', 0, 0, 0, 0, '0000-00-00 00:00:00'),
 (6, 'Bruno', 0, 0, 0, 0, '0000-00-00 00:00:00'),
 (7, 'Fany', 0, 0, 0, 0, '2014-07-09 14:21:21'),
