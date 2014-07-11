@@ -413,17 +413,17 @@ app.get('/movies', function(req, res) {
 app.post('/movies', function(req, res){
     console.log("POST: ");
     var movie = req.param("title");
-    var genre = req.param("genre");
+    //var genre = req.param("genre");
     console.log(movie);
     if(!movie){
         movie = 'movie par defaut';
     }
-    connection.query('INSERT INTO movie SET ?', { "title" : movie, "genre" : genre}, function(err, result) {
+    connection.query('INSERT INTO movie SET ?', { "title" : movie}, function(err, result) {
         if (err) throw err;
     });
 });
 
-// On récupère tous les films aimés par un utilisateur
+// On récupère la fiche d'un film.
 app.get('/movies/:id', function(req, res) {
     console.log("GET: ");
     console.log(req);
@@ -438,7 +438,7 @@ app.get('/movies/:id', function(req, res) {
         });
 });
 
-// On récupère tous les films aimés par un utilisateur
+// On supprime la fiche d'un film.
 app.delete('/movies/:id', function(req, res) {
     console.log("GET: ");
     console.log(req);
