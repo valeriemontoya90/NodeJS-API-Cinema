@@ -413,12 +413,13 @@ app.get('/movies', function(req, res) {
 app.post('/movies', function(req, res){
     console.log("POST: ");
     var movie = req.param("title");
-    //var genre = req.param("genre");
+    var genre = req.param("genre");
     console.log(movie);
+    console.log(genre);
     if(!movie){
         movie = 'movie par defaut';
     }
-    connection.query('INSERT INTO movie SET ?', { "title" : movie}, function(err, result) {
+    connection.query('INSERT INTO movie SET ?', { "title" : movie, "genre" : movie}, function(err, result) {
         if (err) throw err;
     });
 });
