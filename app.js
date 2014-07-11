@@ -133,31 +133,9 @@ app.get('/users/:id/likes', function(req, res) {
                         }
                     });
             }
-            
         });
         console.log("AAAAAAAAAA")
 });
-        /*
-        .on('end', function(){
-            connection.query("SELECT COUNT(`idMovie`) AS idMovie FROM `movie-liked` WHERE idUser = '"+idUser+"'")
-                .on('result', function(rows2){
-                    var test = rows2["idMovie"];
-                    console.log(rows2["idMovie"]);
-                    for (var i=0; i<rows2["idMovie"]; i++) {
-                        connection.query("SELECT * FROM `movie` WHERE id = '"+idsMovie[1]+"'")
-                            .on('result', function(rows){
-                                data.push(rows);
-                            })
-                            .on('end', function(){
-                                res.json({ data: data })
-                            });
-                    }
-                })
-                .on('end', function(){
-                    res.json({ data: data })
-                });
-        });
-        */
 
 // Quand un utilisateur aime un film
 app.post('/users/:id/likes/:idmovie', function(req, res) {
@@ -218,19 +196,37 @@ app.delete('/users/:id/likes/:idmovie', function(req, res) {
 /****** UTILISATEUR et ses DISLIKES ***/
 
 
-// On récupère tous les films détestés par un utilisateur
+// On récupère tous les films non aimés d'un utilisateur
 app.get('/users/:id/dislikes', function(req, res) {
     console.log("GET: ");
-    //console.log(req);
     var data = [];
+    var idsMovie = [];
     var idUser = req.params.id;
-    connection.query("SELECT * FROM `movie-disliked` WHERE idUser = '"+idUser+"'")
-        .on('result', function(rows){
-            data.push(rows);
+    connection.query("SELECT `idMovie` FROM `movie-disliked` WHERE idUser = '"+idUser+"'")
+        .on('result', function(rows2){
+            idsMovie.push(rows2["idMovie"]);
+            console.log(idsMovie);
         })
         .on('end', function(){
-            res.json({ data: data })
+            console.log("avant for",idsMovie)
+            for(var i=0; i<idsMovie.length; i++){
+            console.log("pendant for")
+                console.log("idsMovie[i]",idsMovie[i])
+                connection.query("SELECT * FROM `movie` WHERE id = '"+idsMovie[i]+"'")
+                    .on('result', function(rows){
+                        data.push(rows);
+                        console.log("rows: %o",rows);
+                        console.log("data: %o",data);
+                    })
+                    .on('end', function(){
+                        console.log(data.length)
+                        if(data.length==idsMovie.length){
+                            res.json({ data: data })
+                        }
+                    });
+            }
         });
+        console.log("AAAAAAAAAA")
 });
 
 // On signale un film non aimé par un utilisateur
@@ -290,7 +286,7 @@ app.delete('/users/:id/dislikes/:idmovie', function(req, res) {
 
 /****** L'UTILISATEUR et ses WATCHED ***/
 
-
+/*
 // On récupère tous les films vus par un user donnée
 app.get('/users/:id/watched', function(req, res) {
     var data = [];
@@ -302,6 +298,40 @@ app.get('/users/:id/watched', function(req, res) {
         .on('end', function(){
             res.json({ data: data })
         });
+});
+*/
+
+// On récupère tous les films non aimés d'un utilisateur
+app.get('/users/:id/watched', function(req, res) {
+    console.log("GET: ");
+    var data = [];
+    var idsMovie = [];
+    var idUser = req.params.id;
+    connection.query("SELECT `idMovie` FROM `movie-watched` WHERE idUser = '"+idUser+"'")
+        .on('result', function(rows2){
+            idsMovie.push(rows2["idMovie"]);
+            console.log(idsMovie);
+        })
+        .on('end', function(){
+            console.log("avant for",idsMovie)
+            for(var i=0; i<idsMovie.length; i++){
+                console.log("pendant for")
+                console.log("idsMovie[i]",idsMovie[i])
+                connection.query("SELECT * FROM `movie` WHERE id = '"+idsMovie[i]+"'")
+                    .on('result', function(rows){
+                        data.push(rows);
+                        console.log("rows: %o",rows);
+                        console.log("data: %o",data);
+                    })
+                    .on('end', function(){
+                        console.log(data.length)
+                        if(data.length==idsMovie.length){
+                            res.json({ data: data })
+                        }
+                    });
+            }
+        });
+        console.log("AAAAAAAAAA")
 });
 
 // On ajoute un film vu par un user donnée
